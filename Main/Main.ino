@@ -2,7 +2,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-int sensorHumedad = 4;
+int sensorHumedad = 39;
 int valvulaPin = 17;
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
@@ -12,12 +12,19 @@ int valvulaPin = 17;
 DHT_Unified dht(DHTPIN, DHTTYPE);
 uint32_t delayMS;
 
-const char* ssid = "BARSING";
+const char* ssid = "Samsung M31";
 const char* password = "05190225";
 
-const char* serverName = "http://tu_servidor/mediciones";
+const char* serverName = "http://192.168.134.7:8080/measures/add";
 
+void initializateAP(){
+  WiFi.softAP(ssid, password);
 
+  // Obtener dirección IP del punto de acceso (AP)
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
+}
 
 void connectWifi(){
     WiFi.begin(ssid, password);
@@ -39,21 +46,25 @@ void connectWifi(){
     Serial.println("-------------------------------");
 }
 
-void hhtpPost(){
+void httpPost(double measure, int sensor){
     if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(serverName);
 
-    // Build JSON object with measurement data
     DynamicJsonDocument doc(1024);
-    //doc["temperature"] = temperature;
-    //doc["airHumidity"] = airHumidity;
-    //doc["soilHumidity"] = soilHumidity;
+    DynamicJsonDocument docSensor(1024);
+
+    docSensor["id"] = sensor;
+    
+    doc["value"] = measure;
+    doc["sensor"] = docSensor;
+    
     String json;
     serializeJson(doc, json);
 
-    // Send HTTP POST request
+
     http.addHeader("Content-Type", "application/json");
+    
     int httpResponseCode = http.POST(json);
     if (httpResponseCode > 0) {
       Serial.print("HTTP Response code: ");
@@ -74,6 +85,7 @@ void setup() {
   delay(1000);
   
   connectWifi();
+  //initializateAP();
 
   dht.begin();
   sensor_t sensorDHT;
@@ -81,22 +93,30 @@ void setup() {
 }
  
 void loop() {  
-  delay(2000);
-
+  delay(5000);
   digitalWrite(valvulaPin,HIGH);
+
   sensors_event_t eventDHT;
   
   dht.temperature().getEvent(&eventDHT);
-  Serial.println("Temperatura: "+String(eventDHT.temperature) + "°C");
-  
-  dht.humidity().getEvent(&eventDHT);
-  Serial.println("Humedad del aire: "+String(eventDHT.relative_humidity) + "%");
+  double temperature = eventDHT.temperature;
+  Serial.println("Temperatura: "+String(temperature) + "°C");
 
+  httpPost(temperature,1);
+   
+  dht.humidity().getEvent(&eventDHT);
+  double humidity = eventDHT.relative_humidity;
+  Serial.println("Humedad del aire: "+String(humidity) + "%");
+
+  httpPost(humidity,2);
   
-  int humedadSuelo = map(analogRead(sensorHumedad), 0, 4095, 100, 0);
-  Serial.println("Humedad de la tierra: "+String(humedadSuelo) + "%");
+  double soilMoisture = map(analogRead(sensorHumedad), 0, 4095, 100, 0);
+  Serial.println("Humedad de la tierra: "+String(soilMoisture) + "%");
+
+  httpPost(soilMoisture,3);
 
   digitalWrite(valvulaPin,LOW);
   
   Serial.println();
+  delay(5000);
 }
