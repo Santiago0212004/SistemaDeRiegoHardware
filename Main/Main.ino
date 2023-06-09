@@ -15,7 +15,7 @@ uint32_t delayMS;
 const char* ssid = "Samsung M31";
 const char* password = "05190225";
 
-const char* serverName = "http://192.168.162.7:8080/measures/add";
+const char* serverName = "http://192.168.16.7:8080/measures/add";
 
 void initializateAP(){
   WiFi.softAP(ssid, password);
@@ -64,6 +64,7 @@ void httpPost(double measure, int sensor){
 
 
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("identification","1044607242");
     
     int httpResponseCode = http.POST(json);
     if (httpResponseCode > 0) {
