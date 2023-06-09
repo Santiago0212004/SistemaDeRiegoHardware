@@ -15,7 +15,7 @@ uint32_t delayMS;
 const char* ssid = "Samsung M31";
 const char* password = "05190225";
 
-const char* serverName = "http://192.168.134.7:8080/measures/add";
+const char* serverName = "http://192.168.162.7:8080/measures/add";
 
 void initializateAP(){
   WiFi.softAP(ssid, password);
@@ -67,6 +67,11 @@ void httpPost(double measure, int sensor){
     
     int httpResponseCode = http.POST(json);
     if (httpResponseCode > 0) {
+      if(httpResponseCode == 201){
+        digitalWrite(valvulaPin,HIGH);
+        delay(5000);
+        digitalWrite(valvulaPin,LOW);
+      }
       Serial.print("HTTP Response code: ");
       Serial.println(httpResponseCode);
     } else {
@@ -93,9 +98,8 @@ void setup() {
 }
  
 void loop() {  
-  delay(5000);
-  digitalWrite(valvulaPin,HIGH);
-
+  delay(10000);
+  
   sensors_event_t eventDHT;
   
   dht.temperature().getEvent(&eventDHT);
@@ -115,8 +119,7 @@ void loop() {
 
   httpPost(soilMoisture,3);
 
-  digitalWrite(valvulaPin,LOW);
   
   Serial.println();
-  delay(5000);
+  delay(10000);
 }
