@@ -15,7 +15,7 @@ uint32_t delayMS;
 const char* ssid = "Samsung M31";
 const char* password = "05190225";
 
-const char* serverName = "http://192.168.16.7:8080/measures/add";
+const char* serverName = "http://192.168.16.7:8080/sistema_de_riego_api/measures/add";
 
 void initializateAP(){
   WiFi.softAP(ssid, password);
